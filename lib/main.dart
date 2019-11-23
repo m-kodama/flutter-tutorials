@@ -45,9 +45,11 @@ class _ToDoScreenState extends State<ToDoScreen> {
           title: Text('GoriDev'),
         ),
         body: ListView.builder(
-          itemCount: _unCheckedTodoList.length, // + _unCheckedTodoList.length,
+          itemCount: _unCheckedTodoList.length + _checkedTodoList.length,
           itemBuilder: (BuildContext context, index) {
-            ToDo todo = _unCheckedTodoList[index];
+            ToDo todo = index < _unCheckedTodoList.length
+                ? _unCheckedTodoList[index]
+                : _checkedTodoList[index - _unCheckedTodoList.length];
             return ListTile(
               leading: IconButton(
                 icon: Icon(todo.isDone
@@ -55,6 +57,14 @@ class _ToDoScreenState extends State<ToDoScreen> {
                     : Icons.radio_button_unchecked),
                 onPressed: () {
                   setState(() {
+                    // ! クソダサコード注意
+                    if (!todo.isDone) {
+                      _checkedTodoList.insert(0, todo);
+                      _unCheckedTodoList.remove(todo);
+                    } else {
+                      _unCheckedTodoList.insert(0, todo);
+                      _checkedTodoList.remove(todo);
+                    }
                     todo.toggle();
                   });
                 },
