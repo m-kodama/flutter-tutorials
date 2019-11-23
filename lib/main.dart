@@ -9,7 +9,7 @@ class MyApp extends StatelessWidget {
     debugPaintSizeEnabled = false;
     return MaterialApp(
       title: 'ToDo List',
-      theme: ThemeData.light(),
+      theme: ThemeData.dark(),
       home: ToDoScreen(),
     );
   }
