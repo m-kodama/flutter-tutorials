@@ -52,9 +52,8 @@ class _ToDoScreenState extends State<ToDoScreen> {
                 : _checkedTodoList[index - _unCheckedTodoList.length];
             return ListTile(
               leading: IconButton(
-                icon: Icon(todo.isDone
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_unchecked),
+                icon: Icon(
+                    todo.isDone ? Icons.check : Icons.radio_button_unchecked),
                 onPressed: () {
                   setState(() {
                     // ! クソダサコード注意
