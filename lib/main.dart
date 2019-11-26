@@ -21,8 +21,11 @@ class ToDoScreen extends StatefulWidget {
 }
 
 class _ToDoScreenState extends State<ToDoScreen> {
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   List<ToDo> _unCheckedTodoList = [];
   List<ToDo> _checkedTodoList = [];
+
+  AnimatedListState get _animatedList => _listKey.currentState;
 
   @override
   void initState() {
@@ -37,6 +40,40 @@ class _ToDoScreenState extends State<ToDoScreen> {
     _checkedTodoList.add(ToDo(text: 'ダミー7', isDone: true));
   }
 
+  void _handleListItemTap(ToDo todo) {
+    print('onTap');
+    setState(() {
+      // ! クソダサコード注意
+      if (!todo.isDone) {
+        _checkedTodoList.insert(0, todo);
+        _animatedList.insertItem(_unCheckedTodoList.length);
+        var index = _unCheckedTodoList.indexOf(todo);
+        _unCheckedTodoList.removeAt(index);
+        _animatedList.removeItem(
+          index,
+          (context, animation) => ToDoListItem(
+            todo: todo,
+            onPressed: _handleListItemTap,
+          ),
+        );
+      } else {
+        _unCheckedTodoList.insert(0, todo);
+        _animatedList.insertItem(0);
+        var index =
+            _unCheckedTodoList.indexOf(todo) + _checkedTodoList.indexOf(todo);
+        _checkedTodoList.removeAt(index);
+        _animatedList.removeItem(
+          index,
+          (context, animation) => ToDoListItem(
+            todo: todo,
+            onPressed: _handleListItemTap,
+          ),
+        );
+      }
+      todo.toggle();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -44,36 +81,47 @@ class _ToDoScreenState extends State<ToDoScreen> {
         appBar: AppBar(
           title: Text('GoriDev'),
         ),
-        body: ListView.builder(
-          itemCount: _unCheckedTodoList.length + _checkedTodoList.length,
-          itemBuilder: (BuildContext context, index) {
+        body: AnimatedList(
+          key: _listKey,
+          initialItemCount: _unCheckedTodoList.length + _checkedTodoList.length,
+          itemBuilder: (context, index, animation) {
             ToDo todo = index < _unCheckedTodoList.length
                 ? _unCheckedTodoList[index]
                 : _checkedTodoList[index - _unCheckedTodoList.length];
-            return ListTile(
-              leading: IconButton(
-                icon: Icon(
-                    todo.isDone ? Icons.check : Icons.radio_button_unchecked),
-                onPressed: () {
-                  setState(() {
-                    // ! クソダサコード注意
-                    if (!todo.isDone) {
-                      _checkedTodoList.insert(0, todo);
-                      _unCheckedTodoList.remove(todo);
-                    } else {
-                      _unCheckedTodoList.insert(0, todo);
-                      _checkedTodoList.remove(todo);
-                    }
-                    todo.toggle();
-                  });
-                },
+            return ScaleTransition(
+              scale: animation.drive(
+                CurveTween(
+                  curve: const Interval(0, 1, curve: Curves.fastOutSlowIn),
+                ),
               ),
-              title: Text(todo.text),
+              child: ToDoListItem(
+                todo: todo,
+                onPressed: _handleListItemTap,
+              ),
             );
           },
         ),
         floatingActionButton: AddTodoButton(),
       ),
+    );
+  }
+}
+
+class ToDoListItem extends StatelessWidget {
+  final ToDo todo;
+  final void Function(ToDo todo) onPressed;
+  ToDoListItem({Key key, @required this.todo, @required this.onPressed})
+      : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: IconButton(
+        icon: Icon(todo.isDone ? Icons.check : Icons.radio_button_unchecked),
+        onPressed: () {
+          this.onPressed(todo);
+        },
+      ),
+      title: Text(todo.text),
     );
   }
 }
