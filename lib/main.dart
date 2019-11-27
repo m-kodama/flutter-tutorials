@@ -154,6 +154,8 @@ class AddTodoButton extends StatefulWidget {
 }
 
 class _AddTodoButtonState extends State<AddTodoButton> {
+  final inputTodoTextController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton(
@@ -183,6 +185,7 @@ class _AddTodoButtonState extends State<AddTodoButton> {
                       padding: EdgeInsets.only(top: 4.0),
                     ),
                     TextField(
+                      controller: inputTodoTextController,
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.symmetric(horizontal: 12.0),
                         border: InputBorder.none,
@@ -214,7 +217,8 @@ class _AddTodoButtonState extends State<AddTodoButton> {
                                 ),
                               ),
                               onPressed: () {
-                                widget.onFormSubmit('ここにテキストフィールドの文字を入れたい');
+                                widget
+                                    .onFormSubmit(inputTodoTextController.text);
                               },
                             ),
                           ],
