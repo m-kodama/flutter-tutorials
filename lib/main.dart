@@ -45,30 +45,27 @@ class _ToDoScreenState extends State<ToDoScreen> {
     setState(() {
       // ! クソダサコード注意
       if (!todo.isDone) {
+        var removedIndex = _unCheckedTodoList.indexOf(todo);
+        ToDo removedToDo = _unCheckedTodoList.removeAt(removedIndex);
+        _animatedList.removeItem(
+          removedIndex,
+          (context, animation) =>
+              _buildAnimatedListItem(removedToDo, animation),
+        );
         _checkedTodoList.insert(0, todo);
         _animatedList.insertItem(_unCheckedTodoList.length);
-        var index = _unCheckedTodoList.indexOf(todo);
-        _unCheckedTodoList.removeAt(index);
-        _animatedList.removeItem(
-          index,
-          (context, animation) => ToDoListItem(
-            todo: todo,
-            onPressed: _handleListItemTap,
-          ),
-        );
       } else {
+        var removedIndex =
+            _unCheckedTodoList.length + _checkedTodoList.indexOf(todo);
+        ToDo removedToDo =
+            _checkedTodoList.removeAt(_checkedTodoList.indexOf(todo));
+        _animatedList.removeItem(
+          removedIndex,
+          (context, animation) =>
+              _buildAnimatedListItem(removedToDo, animation),
+        );
         _unCheckedTodoList.insert(0, todo);
         _animatedList.insertItem(0);
-        var index =
-            _unCheckedTodoList.indexOf(todo) + _checkedTodoList.indexOf(todo);
-        _checkedTodoList.removeAt(index);
-        _animatedList.removeItem(
-          index,
-          (context, animation) => ToDoListItem(
-            todo: todo,
-            onPressed: _handleListItemTap,
-          ),
-        );
       }
       todo.toggle();
     });
@@ -88,20 +85,24 @@ class _ToDoScreenState extends State<ToDoScreen> {
             ToDo todo = index < _unCheckedTodoList.length
                 ? _unCheckedTodoList[index]
                 : _checkedTodoList[index - _unCheckedTodoList.length];
-            return ScaleTransition(
-              scale: animation.drive(
-                CurveTween(
-                  curve: const Interval(0, 1, curve: Curves.fastOutSlowIn),
-                ),
-              ),
-              child: ToDoListItem(
-                todo: todo,
-                onPressed: _handleListItemTap,
-              ),
-            );
+            return _buildAnimatedListItem(todo, animation);
           },
         ),
         floatingActionButton: AddTodoButton(),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedListItem(ToDo todo, Animation animation) {
+    return ScaleTransition(
+      scale: animation.drive(
+        CurveTween(
+          curve: const Interval(0, 1, curve: Curves.fastOutSlowIn),
+        ),
+      ),
+      child: ToDoListItem(
+        todo: todo,
+        onPressed: _handleListItemTap,
       ),
     );
   }
@@ -110,7 +111,7 @@ class _ToDoScreenState extends State<ToDoScreen> {
 class ToDoListItem extends StatelessWidget {
   final ToDo todo;
   final void Function(ToDo todo) onPressed;
-  ToDoListItem({Key key, @required this.todo, @required this.onPressed})
+  ToDoListItem({Key key, @required this.todo, this.onPressed})
       : super(key: key);
   @override
   Widget build(BuildContext context) {
