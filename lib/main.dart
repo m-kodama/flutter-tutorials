@@ -25,6 +25,10 @@ class _ToDoScreenState extends State<ToDoScreen> {
   List<ToDo> _unCheckedTodoList = [];
   List<ToDo> _checkedTodoList = [];
 
+  List<ToDo> get _todoList => List.from(_unCheckedTodoList)
+    ..add(null)
+    ..addAll(_checkedTodoList);
+
   AnimatedListState get _animatedList => _listKey.currentState;
 
   @override
@@ -53,10 +57,10 @@ class _ToDoScreenState extends State<ToDoScreen> {
               _buildAnimatedListItem(removedToDo, animation),
         );
         _checkedTodoList.insert(0, todo);
-        _animatedList.insertItem(_unCheckedTodoList.length);
+        _animatedList.insertItem(_unCheckedTodoList.length + 1);
       } else {
         var removedIndex =
-            _unCheckedTodoList.length + _checkedTodoList.indexOf(todo);
+            _unCheckedTodoList.length + 1 + _checkedTodoList.indexOf(todo);
         ToDo removedToDo =
             _checkedTodoList.removeAt(_checkedTodoList.indexOf(todo));
         _animatedList.removeItem(
@@ -80,12 +84,17 @@ class _ToDoScreenState extends State<ToDoScreen> {
         ),
         body: AnimatedList(
           key: _listKey,
-          initialItemCount: _unCheckedTodoList.length + _checkedTodoList.length,
+          initialItemCount: _todoList.length,
           itemBuilder: (context, index, animation) {
-            ToDo todo = index < _unCheckedTodoList.length
-                ? _unCheckedTodoList[index]
-                : _checkedTodoList[index - _unCheckedTodoList.length];
-            return _buildAnimatedListItem(todo, animation);
+            ToDo todo = _todoList[index];
+            // todoがnullの時はセクション区切りを表示する（nullでリスト区切りを表現するのはヤバいが...）
+            if (todo != null) return _buildAnimatedListItem(todo, animation);
+            if (_checkedTodoList.isNotEmpty)
+              return Container(
+                padding: EdgeInsets.all(16.0),
+                child: Text('完了済み'),
+              );
+            return null;
           },
         ),
         floatingActionButton: AddTodoButton(),
