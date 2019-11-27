@@ -75,6 +75,13 @@ class _ToDoScreenState extends State<ToDoScreen> {
     });
   }
 
+  void _createToDo(String todoText) {
+    // TODO: アニメーションインサート処理を関数化する
+    var todo = ToDo(text: todoText);
+    _unCheckedTodoList.insert(0, todo);
+    _animatedList.insertItem(0);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -97,7 +104,9 @@ class _ToDoScreenState extends State<ToDoScreen> {
             return null;
           },
         ),
-        floatingActionButton: AddTodoButton(),
+        floatingActionButton: AddTodoButton(
+          onFormSubmit: _createToDo,
+        ),
       ),
     );
   }
@@ -137,6 +146,9 @@ class ToDoListItem extends StatelessWidget {
 }
 
 class AddTodoButton extends StatefulWidget {
+  final void Function(String todo) onFormSubmit;
+  AddTodoButton({Key key, this.onFormSubmit}) : super(key: key);
+
   @override
   _AddTodoButtonState createState() => _AddTodoButtonState();
 }
@@ -201,7 +213,9 @@ class _AddTodoButtonState extends State<AddTodoButton> {
                                   fontSize: 16.0,
                                 ),
                               ),
-                              onPressed: () {},
+                              onPressed: () {
+                                widget.onFormSubmit('ここにテキストフィールドの文字を入れたい');
+                              },
                             ),
                           ],
                         ),
