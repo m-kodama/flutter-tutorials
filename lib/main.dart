@@ -239,6 +239,12 @@ class _AddTodoButtonState extends State<AddTodoButton> {
       },
     );
   }
+
+  @override
+  void dispose() {
+    inputTodoTextController.dispose();
+    super.dispose();
+  }
 }
 
 class ToDo {
