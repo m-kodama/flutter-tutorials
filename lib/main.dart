@@ -193,6 +193,7 @@ class _AddTodoButtonState extends State<AddTodoButton> {
                       padding: EdgeInsets.only(top: 4.0),
                     ),
                     TextFormField(
+                      autofocus: true,
                       controller: inputTodoTextController,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (text) {
