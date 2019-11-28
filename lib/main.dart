@@ -202,6 +202,9 @@ class _AddTodoButtonState extends State<AddTodoButton> {
                         labelText: '新しいタスク',
                       ),
                     ),
+                    Padding(
+                      padding: EdgeInsets.only(top: 8.0),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
