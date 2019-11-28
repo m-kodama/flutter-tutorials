@@ -157,6 +157,11 @@ class _AddTodoButtonState extends State<AddTodoButton> {
   final inputTodoTextController = TextEditingController();
 
   void _handleSaveButtonTap() {
+    // フォームが空ならボトムシートを閉じる
+    if (inputTodoTextController.text.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
     widget.onFormSubmit(inputTodoTextController.text);
     // テキストフィールドをクリアする
     inputTodoTextController.clear();
