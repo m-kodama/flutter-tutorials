@@ -156,6 +156,14 @@ class AddTodoButton extends StatefulWidget {
 class _AddTodoButtonState extends State<AddTodoButton> {
   final inputTodoTextController = TextEditingController();
 
+  void _handleSaveButtonTap() {
+    widget.onFormSubmit(inputTodoTextController.text);
+    // テキストフィールドをクリアする
+    inputTodoTextController.clear();
+    // ボトムシートを閉じる
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton(
@@ -216,10 +224,7 @@ class _AddTodoButtonState extends State<AddTodoButton> {
                                   fontSize: 16.0,
                                 ),
                               ),
-                              onPressed: () {
-                                widget
-                                    .onFormSubmit(inputTodoTextController.text);
-                              },
+                              onPressed: _handleSaveButtonTap,
                             ),
                           ],
                         ),
