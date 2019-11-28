@@ -86,7 +86,8 @@ class _ToDoScreenState extends State<ToDoScreen> {
           initialItemCount: _todoList.length,
           itemBuilder: (context, index, animation) {
             ToDo todo = _todoList[index];
-            // todoがnullの時はセクション区切りを表示する（nullでリスト区切りを表現するのはヤバいが...）
+            // nullの時はセクション区切りを表示する（nullでリスト区切りを表現するのはヤバいが...）
+            // TODO: ここのコード整理したい
             if (todo != null) return _buildAnimatedListItem(todo, animation);
             if (_unCheckedTodoList.isEmpty && _checkedTodoList.isEmpty)
               return _buildEmptySheet();
