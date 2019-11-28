@@ -192,8 +192,12 @@ class _AddTodoButtonState extends State<AddTodoButton> {
                     Padding(
                       padding: EdgeInsets.only(top: 4.0),
                     ),
-                    TextField(
+                    TextFormField(
                       controller: inputTodoTextController,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (text) {
+                        _handleSaveButtonTap();
+                      },
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.symmetric(horizontal: 12.0),
                         border: InputBorder.none,
