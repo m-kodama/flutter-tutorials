@@ -102,6 +102,8 @@ class _ToDoScreenState extends State<ToDoScreen> {
         floatingActionButton: AddTodoButton(
           onFormSubmit: _createToDo,
         ),
+        // FABをcenterにおきたい時はこれ
+        // floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
     );
   }
@@ -189,11 +191,15 @@ class _AddTodoButtonState extends State<AddTodoButton> {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton(
+    return FloatingActionButton.extended(
       heroTag: null,
-      child: Icon(
-        Icons.add,
-        size: 32,
+      icon: Icon(
+        Icons.edit,
+        // size: 32,
+      ),
+      label: Text(
+        'タスクを追加',
+        style: TextStyle(fontWeight: FontWeight.bold),
       ),
       onPressed: () async {
         await showModalBottomSheet<Widget>(
