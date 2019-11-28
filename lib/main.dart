@@ -34,14 +34,6 @@ class _ToDoScreenState extends State<ToDoScreen> {
   @override
   void initState() {
     super.initState();
-
-    _unCheckedTodoList.add(ToDo(text: 'ダミー1'));
-    _unCheckedTodoList.add(ToDo(text: 'ダミー2'));
-    _unCheckedTodoList.add(ToDo(text: 'ダミー3'));
-    _unCheckedTodoList.add(ToDo(text: 'ダミー4'));
-    _unCheckedTodoList.add(ToDo(text: 'ダミー5'));
-    _checkedTodoList.add(ToDo(text: 'ダミー6', isDone: true));
-    _checkedTodoList.add(ToDo(text: 'ダミー7', isDone: true));
   }
 
   void _handleListItemTap(ToDo todo) {
@@ -96,6 +88,8 @@ class _ToDoScreenState extends State<ToDoScreen> {
             ToDo todo = _todoList[index];
             // todoがnullの時はセクション区切りを表示する（nullでリスト区切りを表現するのはヤバいが...）
             if (todo != null) return _buildAnimatedListItem(todo, animation);
+            if (_unCheckedTodoList.isEmpty && _checkedTodoList.isEmpty)
+              return _buildEmptySheet();
             if (_checkedTodoList.isNotEmpty)
               return Container(
                 padding: EdgeInsets.all(16.0),
@@ -122,6 +116,29 @@ class _ToDoScreenState extends State<ToDoScreen> {
         todo: todo,
         onPressed: _handleListItemTap,
       ),
+    );
+  }
+
+  Widget _buildEmptySheet() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Container(
+          padding: EdgeInsets.fromLTRB(32, 64, 32, 0),
+          child: Image.asset(
+            'assets/images/empty_image.png',
+          ),
+        ),
+        Text(
+          'やるべきことはありません',
+          style: Theme.of(context).primaryTextTheme.body1,
+        ),
+        Text(
+          'タスクを追加してみましょう',
+          style: Theme.of(context).primaryTextTheme.caption,
+        ),
+      ],
     );
   }
 }
