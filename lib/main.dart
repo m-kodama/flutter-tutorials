@@ -156,6 +156,8 @@ class AddTodoButton extends StatefulWidget {
 class _AddTodoButtonState extends State<AddTodoButton> {
   final inputTodoTextController = TextEditingController();
 
+  bool get _canSave => inputTodoTextController.text.isNotEmpty;
+
   void _handleSaveButtonTap() {
     widget.onFormSubmit(inputTodoTextController.text);
     // テキストフィールドをクリアする
@@ -228,7 +230,7 @@ class _AddTodoButtonState extends State<AddTodoButton> {
                                   fontSize: 16.0,
                                 ),
                               ),
-                              onPressed: _handleSaveButtonTap,
+                              onPressed: _canSave ? _handleSaveButtonTap : null,
                             ),
                           ],
                         ),
