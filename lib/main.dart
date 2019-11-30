@@ -37,9 +37,12 @@ class _ToDoScreenState extends State<ToDoScreen> {
     super.initState();
   }
 
-  void _handleListItemTap(ToDo todo) {
+  void _handleListItemTap(ToDo todo) async {
     print('onTap');
-    setState(() {
+    setState(() async {
+      var deleteDuration = Duration(milliseconds: 275);
+      var insertDuration = Duration(milliseconds: 225);
+      var delay = deleteDuration;
       // ! クソダサコード注意
       if (!todo.isDone) {
         var removedIndex = _unCheckedTodoList.indexOf(todo);
@@ -48,9 +51,14 @@ class _ToDoScreenState extends State<ToDoScreen> {
           removedIndex,
           (context, animation) =>
               _buildAnimatedListItem(removedToDo, animation),
+          duration: deleteDuration,
         );
+        await new Future.delayed(delay);
         _checkedTodoList.insert(0, todo);
-        _animatedList.insertItem(_unCheckedTodoList.length + 1);
+        _animatedList.insertItem(
+          _unCheckedTodoList.length + 1,
+          duration: insertDuration,
+        );
       } else {
         var removedIndex =
             _unCheckedTodoList.length + 1 + _checkedTodoList.indexOf(todo);
@@ -60,9 +68,14 @@ class _ToDoScreenState extends State<ToDoScreen> {
           removedIndex,
           (context, animation) =>
               _buildAnimatedListItem(removedToDo, animation),
+          duration: deleteDuration,
         );
+        await new Future.delayed(delay);
         _unCheckedTodoList.insert(0, todo);
-        _animatedList.insertItem(0);
+        _animatedList.insertItem(
+          0,
+          duration: insertDuration,
+        );
       }
       todo.toggle();
     });
