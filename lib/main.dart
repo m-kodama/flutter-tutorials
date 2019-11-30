@@ -132,10 +132,12 @@ class _ToDoScreenState extends State<ToDoScreen> {
 
   Widget _buildCheckedSectionHeader() {
     return ListTile(
-      title: Text('完了済み'),
+      title: Text('完了済み', style: TextStyle(fontSize: 12.0)),
       trailing: IconButton(
         icon: Icon(
-            _isHideCheckedTodoList ? Icons.expand_more : Icons.expand_less),
+          _isHideCheckedTodoList ? Icons.expand_more : Icons.expand_less,
+          size: 20.0,
+        ),
         onPressed: () {
           setState(() {
             _isHideCheckedTodoList = !_isHideCheckedTodoList;
