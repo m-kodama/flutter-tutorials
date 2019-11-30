@@ -24,6 +24,7 @@ class _ToDoScreenState extends State<ToDoScreen> {
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   List<ToDo> _unCheckedTodoList = [];
   List<ToDo> _checkedTodoList = [];
+  bool _isHideCheckedTodoList = false;
 
   List<ToDo> get _todoList => List.from(_unCheckedTodoList)
     ..add(null)
@@ -88,14 +89,30 @@ class _ToDoScreenState extends State<ToDoScreen> {
             ToDo todo = _todoList[index];
             // nullの時はセクション区切りを表示する（nullでリスト区切りを表現するのはヤバいが...）
             // TODO: ここのコード整理したい
-            if (todo != null) return _buildAnimatedListItem(todo, animation);
+            if (todo != null) {
+              if (todo.isDone && _isHideCheckedTodoList) return null;
+              return _buildAnimatedListItem(todo, animation);
+            }
             if (_unCheckedTodoList.isEmpty && _checkedTodoList.isEmpty)
               return _buildEmptySheet();
             if (_checkedTodoList.isNotEmpty)
-              return Container(
-                padding: EdgeInsets.all(16.0),
-                child: Text('完了済み'),
+              return ListTile(
+                title: Text('完了済み'),
+                trailing: IconButton(
+                  icon: Icon(_isHideCheckedTodoList
+                      ? Icons.expand_more
+                      : Icons.expand_less),
+                  onPressed: () {
+                    setState(() {
+                      _isHideCheckedTodoList = !_isHideCheckedTodoList;
+                    });
+                  },
+                ),
               );
+            // return Container(
+            //   padding: EdgeInsets.all(16.0),
+            //   child: Text('完了済み'),
+            // );
             return null;
           },
         ),
