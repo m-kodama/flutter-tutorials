@@ -93,26 +93,17 @@ class _ToDoScreenState extends State<ToDoScreen> {
               if (todo.isDone && _isHideCheckedTodoList) return null;
               return _buildAnimatedListItem(todo, animation);
             }
-            if (_unCheckedTodoList.isEmpty && _checkedTodoList.isEmpty)
-              return _buildEmptySheet();
-            if (_checkedTodoList.isNotEmpty)
-              return ListTile(
-                title: Text('完了済み'),
-                trailing: IconButton(
-                  icon: Icon(_isHideCheckedTodoList
-                      ? Icons.expand_more
-                      : Icons.expand_less),
-                  onPressed: () {
-                    setState(() {
-                      _isHideCheckedTodoList = !_isHideCheckedTodoList;
-                    });
-                  },
-                ),
+            if (_unCheckedTodoList.isEmpty) {
+              if (_checkedTodoList.isEmpty) return _buildEmptySheet();
+              return Column(
+                children: <Widget>[
+                  _buildEmptySheet(),
+                  _buildCheckedSectionHeader(),
+                ],
               );
-            // return Container(
-            //   padding: EdgeInsets.all(16.0),
-            //   child: Text('完了済み'),
-            // );
+            }
+            if (_checkedTodoList.isNotEmpty)
+              return _buildCheckedSectionHeader();
             return null;
           },
         ),
@@ -135,6 +126,21 @@ class _ToDoScreenState extends State<ToDoScreen> {
       child: ToDoListItem(
         todo: todo,
         onPressed: _handleListItemTap,
+      ),
+    );
+  }
+
+  Widget _buildCheckedSectionHeader() {
+    return ListTile(
+      title: Text('完了済み'),
+      trailing: IconButton(
+        icon: Icon(
+            _isHideCheckedTodoList ? Icons.expand_more : Icons.expand_less),
+        onPressed: () {
+          setState(() {
+            _isHideCheckedTodoList = !_isHideCheckedTodoList;
+          });
+        },
       ),
     );
   }
