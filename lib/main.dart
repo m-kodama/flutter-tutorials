@@ -130,15 +130,32 @@ class _ToDoScreenState extends State<ToDoScreen> {
   }
 
   Widget _buildAnimatedListItem(ToDo todo, Animation animation) {
-    return ScaleTransition(
-      scale: animation.drive(
-        CurveTween(
-          curve: const Interval(0, 1, curve: Curves.fastOutSlowIn),
-        ),
+    return Dismissible(
+      background: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 16.0),
+        child: Icon(Icons.delete_forever),
       ),
-      child: ToDoListItem(
-        todo: todo,
-        onPressed: _handleListItemTap,
+      key: Key(todo.hashCode.toString()),
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction) {
+        setState(() {
+          // TODO 削除時にリストの中身を確認する（debug方法調べてからやる）
+          var list = todo.isDone ? _checkedTodoList : _unCheckedTodoList;
+          list.remove(todo);
+        });
+      },
+      child: ScaleTransition(
+        scale: animation.drive(
+          CurveTween(
+            curve: const Interval(0, 1, curve: Curves.fastOutSlowIn),
+          ),
+        ),
+        child: ToDoListItem(
+          todo: todo,
+          onPressed: _handleListItemTap,
+        ),
       ),
     );
   }
