@@ -21,6 +21,7 @@ class ToDoScreen extends StatefulWidget {
 }
 
 class _ToDoScreenState extends State<ToDoScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   List<ToDo> _unCheckedTodoList = [];
   List<ToDo> _checkedTodoList = [];
@@ -92,6 +93,7 @@ class _ToDoScreenState extends State<ToDoScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: Text('GoriDev'),
         ),
@@ -140,11 +142,14 @@ class _ToDoScreenState extends State<ToDoScreen> {
       key: Key(todo.hashCode.toString()),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
+        void Function() onPressed = null;
         setState(() {
           // ! クソダサコード注意
+          // TODO: デリート処理を共通化する
+          // TODO: snackbar処理を共通化する
           if (!todo.isDone) {
             var removedIndex = _unCheckedTodoList.indexOf(todo);
-            ToDo removedToDo = _unCheckedTodoList.removeAt(removedIndex);
+            var removedToDo = _unCheckedTodoList.removeAt(removedIndex);
             _animatedList.removeItem(
               removedIndex,
               (context, animation) =>
@@ -153,19 +158,38 @@ class _ToDoScreenState extends State<ToDoScreen> {
               // 根本的な解決方法の模索が必要
               duration: Duration(milliseconds: 0),
             );
+
+            onPressed = () {
+              // TODO: インサート処理を共通化する
+              _unCheckedTodoList.insert(removedIndex, removedToDo);
+              _animatedList.insertItem(removedIndex);
+            };
           } else {
-            var removedIndex =
-                _unCheckedTodoList.length + 1 + _checkedTodoList.indexOf(todo);
-            ToDo removedToDo =
-                _checkedTodoList.removeAt(_checkedTodoList.indexOf(todo));
+            var checkedListIndex = _checkedTodoList.indexOf(todo);
+            var removedIndex = _unCheckedTodoList.length + 1 + checkedListIndex;
+            var removedToDo = _checkedTodoList.removeAt(checkedListIndex);
             _animatedList.removeItem(
               removedIndex,
               (context, animation) =>
                   _buildAnimatedListItem(removedToDo, animation),
               duration: Duration(milliseconds: 0),
             );
+
+            onPressed = () {
+              // TODO: インサート処理を共通化する
+              _checkedTodoList.insert(checkedListIndex, removedToDo);
+              _animatedList.insertItem(removedIndex);
+            };
           }
         });
+        final snackBar = SnackBar(
+          content: Text('タスクを削除しました'),
+          action: SnackBarAction(
+            label: '元に戻す',
+            onPressed: onPressed,
+          ),
+        );
+        _scaffoldKey.currentState.showSnackBar(snackBar);
       },
       child: ScaleTransition(
         scale: animation.drive(
