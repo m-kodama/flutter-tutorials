@@ -141,9 +141,30 @@ class _ToDoScreenState extends State<ToDoScreen> {
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
         setState(() {
-          // TODO 削除時にリストの中身を確認する（debug方法調べてからやる）
-          var list = todo.isDone ? _checkedTodoList : _unCheckedTodoList;
-          list.remove(todo);
+          // ! クソダサコード注意
+          if (!todo.isDone) {
+            var removedIndex = _unCheckedTodoList.indexOf(todo);
+            ToDo removedToDo = _unCheckedTodoList.removeAt(removedIndex);
+            _animatedList.removeItem(
+              removedIndex,
+              (context, animation) =>
+                  _buildAnimatedListItem(removedToDo, animation),
+              // durationを0にしないとdismissibleの削除アニメーションと重複してエラーが出るっぽい
+              // 根本的な解決方法の模索が必要
+              duration: Duration(milliseconds: 0),
+            );
+          } else {
+            var removedIndex =
+                _unCheckedTodoList.length + 1 + _checkedTodoList.indexOf(todo);
+            ToDo removedToDo =
+                _checkedTodoList.removeAt(_checkedTodoList.indexOf(todo));
+            _animatedList.removeItem(
+              removedIndex,
+              (context, animation) =>
+                  _buildAnimatedListItem(removedToDo, animation),
+              duration: Duration(milliseconds: 0),
+            );
+          }
         });
       },
       child: ScaleTransition(
@@ -238,7 +259,7 @@ class _AddTodoButtonState extends State<AddTodoButton> {
       return;
     }
     widget.onFormSubmit(inputTodoTextController.text);
-    // テキストフィールドをクリアする
+    // テキス���フィールドをクリアする
     inputTodoTextController.clear();
     // ボトムシートを閉じる
     Navigator.pop(context);
