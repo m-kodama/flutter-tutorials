@@ -23,13 +23,16 @@ class ToDoScreen extends StatefulWidget {
 class _ToDoScreenState extends State<ToDoScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
-  List<ToDo> _unCheckedTodoList = [];
-  List<ToDo> _checkedTodoList = [];
+  List<ToDo> _todoList = [];
   bool _isHideCheckedTodoList = false;
 
-  List<ToDo> get _todoList => List.from(_unCheckedTodoList)
-    ..add(null)
-    ..addAll(_checkedTodoList);
+  List<ToDo> get checkedToDoList => _todoList.where((todo) => todo.isDone);
+  List<ToDo> get uncheckedToDoList => _todoList.where((todo) => !todo.isDone);
+
+  List<ToDoListItem> get todoList => []
+    ..addAll(uncheckedToDoList.toList())
+    ..add(SectionTitle(title: '完了済み'))
+    ..addAll(checkedToDoList.toList());
 
   AnimatedListState get _animatedList => _listKey.currentState;
 
@@ -41,51 +44,37 @@ class _ToDoScreenState extends State<ToDoScreen> {
   void _handleListItemTap(ToDo todo) async {
     print('onTap');
     setState(() async {
+      // アニメーションのduration
       var deleteDuration = Duration(milliseconds: 275);
       var insertDuration = Duration(milliseconds: 225);
       var delay = deleteDuration;
-      // ! クソダサコード注意
-      if (!todo.isDone) {
-        var removedIndex = _unCheckedTodoList.indexOf(todo);
-        ToDo removedToDo = _unCheckedTodoList.removeAt(removedIndex);
-        _animatedList.removeItem(
-          removedIndex,
-          (context, animation) =>
-              _buildAnimatedListItem(removedToDo, animation),
-          duration: deleteDuration,
-        );
-        await new Future.delayed(delay);
-        _checkedTodoList.insert(0, todo);
-        _animatedList.insertItem(
-          _unCheckedTodoList.length + 1,
-          duration: insertDuration,
-        );
-      } else {
-        var removedIndex =
-            _unCheckedTodoList.length + 1 + _checkedTodoList.indexOf(todo);
-        ToDo removedToDo =
-            _checkedTodoList.removeAt(_checkedTodoList.indexOf(todo));
-        _animatedList.removeItem(
-          removedIndex,
-          (context, animation) =>
-              _buildAnimatedListItem(removedToDo, animation),
-          duration: deleteDuration,
-        );
-        await new Future.delayed(delay);
-        _unCheckedTodoList.insert(0, todo);
-        _animatedList.insertItem(
-          0,
-          duration: insertDuration,
-        );
-      }
+
+      // リストから削除
+      var removedIndex = _todoList.indexOf(todo);
+      ToDo removedToDo = _todoList.removeAt(removedIndex);
+      _animatedList.removeItem(
+        removedIndex,
+        (context, animation) => _buildAnimatedListItem(removedToDo, animation),
+        duration: deleteDuration,
+      );
+      await new Future.delayed(delay);
+
+      // チェック状態を変更
       todo.toggle();
+
+      // リストの先頭に追加
+      _todoList.insert(0, removedToDo);
+      _animatedList.insertItem(
+        0,
+        duration: insertDuration,
+      );
     });
   }
 
   void _createToDo(String todoText) {
     // TODO: アニメーションインサート処理を関数化する
     var todo = ToDo(text: todoText);
-    _unCheckedTodoList.insert(0, todo);
+    _todoList.insert(0, todo);
     _animatedList.insertItem(0);
   }
 
@@ -99,26 +88,21 @@ class _ToDoScreenState extends State<ToDoScreen> {
         ),
         body: AnimatedList(
           key: _listKey,
-          initialItemCount: _todoList.length,
+          initialItemCount: todoList.length,
           itemBuilder: (context, index, animation) {
-            ToDo todo = _todoList[index];
-            // nullの時はセクション区切りを表示する（nullでリスト区切りを表現するのはヤバいが...）
-            // TODO: ここのコード整理したい
-            if (todo != null) {
+            ToDoListItem todo = todoList[index];
+            if (todo is ToDo) {
               if (todo.isDone && _isHideCheckedTodoList) return null;
               return _buildAnimatedListItem(todo, animation);
             }
-            if (_unCheckedTodoList.isEmpty) {
-              if (_checkedTodoList.isEmpty) return _buildEmptySheet();
-              return Column(
-                children: <Widget>[
-                  _buildEmptySheet(),
-                  _buildCheckedSectionHeader(),
-                ],
-              );
+            if (todo is SectionTitle) {
+              // チェック済0件　かつ　未チェック0件
+              List<Widget> ret = [];
+              if (uncheckedToDoList.isEmpty) ret.add(_buildEmptySheet());
+              if (checkedToDoList.isNotEmpty)
+                ret.add(_buildCheckedSectionHeader());
+              return Column(children: ret);
             }
-            if (_checkedTodoList.isNotEmpty)
-              return _buildCheckedSectionHeader();
             return null;
           },
         ),
@@ -142,7 +126,7 @@ class _ToDoScreenState extends State<ToDoScreen> {
       key: Key(todo.hashCode.toString()),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
-        void Function() onPressed = null;
+        void Function() onPressed;
         setState(() {
           // ! クソダサコード注意
           // TODO: デリート処理を共通化する
