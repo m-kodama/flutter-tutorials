@@ -49,27 +49,28 @@ class _ToDoScreenState extends State<ToDoScreen> {
       // アニメーションのduration
       var deleteDuration = Duration(milliseconds: 275);
       var insertDuration = Duration(milliseconds: 225);
-      var delay = deleteDuration;
+      var delay = Duration(milliseconds: 200);
 
       // リストから削除
-      var removedIndex = _todoList.indexOf(todo);
-      ToDo removedToDo = _todoList.removeAt(removedIndex);
+      var animetedIndex = todoList.indexOf(todo);
+      _todoList.remove(todo);
       _animatedList.removeItem(
-        removedIndex,
-        (context, animation) => _buildAnimatedListItem(removedToDo, animation),
+        animetedIndex,
+        (context, animation) => _buildAnimatedListItem(todo, animation),
         duration: deleteDuration,
       );
+      // 削除のアニメーションが終わるまで待つ
       await new Future.delayed(delay);
+
+      // リストの先頭に追加
+      _todoList.insert(0, todo);
+      _animatedList.insertItem(
+        todo.isDone ? 0 : uncheckedToDoList.length,
+        duration: insertDuration,
+      );
 
       // チェック状態を変更
       todo.toggle();
-
-      // リストの先頭に追加
-      _todoList.insert(0, removedToDo);
-      _animatedList.insertItem(
-        0,
-        duration: insertDuration,
-      );
     });
   }
 
@@ -130,20 +131,20 @@ class _ToDoScreenState extends State<ToDoScreen> {
           // TODO: デリート処理を共通化する
           // TODO: snackbar処理を共通化する
           // リストから削除
+          var animatedIndex = todoList.indexOf(todo);
           var removedIndex = _todoList.indexOf(todo);
-          ToDo removedToDo = _todoList.removeAt(removedIndex);
+          _todoList.removeAt(removedIndex);
           _animatedList.removeItem(
-            removedIndex,
-            (context, animation) =>
-                _buildAnimatedListItem(removedToDo, animation),
+            animatedIndex,
+            (context, animation) => _buildAnimatedListItem(todo, animation),
             // durationを0にしないとdismissibleの削除アニメーションと重複してエラーが出るっぽい
             duration: Duration(milliseconds: 0),
           );
 
           onPressed = () {
             // TODO: インサート処理を共通化する
-            _todoList.insert(removedIndex, removedToDo);
-            _animatedList.insertItem(removedIndex);
+            _todoList.insert(removedIndex, todo);
+            _animatedList.insertItem(animatedIndex);
           };
         });
         final snackBar = SnackBar(
