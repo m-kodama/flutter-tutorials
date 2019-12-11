@@ -197,7 +197,7 @@ class _ToDoScreenState extends State<ToDoScreen> {
             curve: const Interval(0, 1, curve: Curves.fastOutSlowIn),
           ),
         ),
-        child: ToDoListItem(
+        child: ToDoListItemView(
           todo: todo,
           onPressed: _handleListItemTap,
         ),
@@ -246,10 +246,10 @@ class _ToDoScreenState extends State<ToDoScreen> {
   }
 }
 
-class ToDoListItem extends StatelessWidget {
+class ToDoListItemView extends StatelessWidget {
   final ToDo todo;
   final void Function(ToDo todo) onPressed;
-  ToDoListItem({Key key, @required this.todo, this.onPressed})
+  ToDoListItemView({Key key, @required this.todo, this.onPressed})
       : super(key: key);
   @override
   Widget build(BuildContext context) {
@@ -384,10 +384,17 @@ class _AddTodoButtonState extends State<AddTodoButton> {
   }
 }
 
-class ToDo {
+abstract class ToDoListItem {}
+
+class ToDo extends ToDoListItem {
   String text;
   bool isDone;
   ToDo({@required this.text, this.isDone = false});
 
   void toggle() => isDone = !isDone;
+}
+
+class SectionTitle extends ToDoListItem {
+  String title;
+  SectionTitle({@required this.title});
 }
