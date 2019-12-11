@@ -26,13 +26,15 @@ class _ToDoScreenState extends State<ToDoScreen> {
   List<ToDo> _todoList = [];
   bool _isHideCheckedTodoList = false;
 
-  List<ToDo> get checkedToDoList => _todoList.where((todo) => todo.isDone);
-  List<ToDo> get uncheckedToDoList => _todoList.where((todo) => !todo.isDone);
+  List<ToDo> get checkedToDoList =>
+      _todoList.where((todo) => todo.isDone).toList();
+  List<ToDo> get uncheckedToDoList =>
+      _todoList.where((todo) => !todo.isDone).toList();
 
   List<ToDoListItem> get todoList => []
-    ..addAll(uncheckedToDoList.toList())
-    ..add(SectionTitle(title: '完了済み'))
-    ..addAll(checkedToDoList.toList());
+    ..addAll(uncheckedToDoList)
+    ..add(SectionHeader(title: '完了済み'))
+    ..addAll(checkedToDoList);
 
   AnimatedListState get _animatedList => _listKey.currentState;
 
@@ -95,7 +97,7 @@ class _ToDoScreenState extends State<ToDoScreen> {
               if (todo.isDone && _isHideCheckedTodoList) return null;
               return _buildAnimatedListItem(todo, animation);
             }
-            if (todo is SectionTitle) {
+            if (todo is SectionHeader) {
               List<Widget> ret = [];
               if (uncheckedToDoList.isEmpty) ret.add(_buildEmptySheet());
               if (checkedToDoList.isNotEmpty)
@@ -125,43 +127,24 @@ class _ToDoScreenState extends State<ToDoScreen> {
       onDismissed: (direction) {
         void Function() onPressed;
         setState(() {
-          // ! クソダサコード注意
           // TODO: デリート処理を共通化する
           // TODO: snackbar処理を共通化する
-          if (!todo.isDone) {
-            var removedIndex = _unCheckedTodoList.indexOf(todo);
-            var removedToDo = _unCheckedTodoList.removeAt(removedIndex);
-            _animatedList.removeItem(
-              removedIndex,
-              (context, animation) =>
-                  _buildAnimatedListItem(removedToDo, animation),
-              // durationを0にしないとdismissibleの削除アニメーションと重複してエラーが出るっぽい
-              // 根本的な解決方法の模索が必要
-              duration: Duration(milliseconds: 0),
-            );
+          // リストから削除
+          var removedIndex = _todoList.indexOf(todo);
+          ToDo removedToDo = _todoList.removeAt(removedIndex);
+          _animatedList.removeItem(
+            removedIndex,
+            (context, animation) =>
+                _buildAnimatedListItem(removedToDo, animation),
+            // durationを0にしないとdismissibleの削除アニメーションと重複してエラーが出るっぽい
+            duration: Duration(milliseconds: 0),
+          );
 
-            onPressed = () {
-              // TODO: インサート処理を共通化する
-              _unCheckedTodoList.insert(removedIndex, removedToDo);
-              _animatedList.insertItem(removedIndex);
-            };
-          } else {
-            var checkedListIndex = _checkedTodoList.indexOf(todo);
-            var removedIndex = _unCheckedTodoList.length + 1 + checkedListIndex;
-            var removedToDo = _checkedTodoList.removeAt(checkedListIndex);
-            _animatedList.removeItem(
-              removedIndex,
-              (context, animation) =>
-                  _buildAnimatedListItem(removedToDo, animation),
-              duration: Duration(milliseconds: 0),
-            );
-
-            onPressed = () {
-              // TODO: インサート処理を共通化する
-              _checkedTodoList.insert(checkedListIndex, removedToDo);
-              _animatedList.insertItem(removedIndex);
-            };
-          }
+          onPressed = () {
+            // TODO: インサート処理を共通化する
+            _todoList.insert(removedIndex, removedToDo);
+            _animatedList.insertItem(removedIndex);
+          };
         });
         final snackBar = SnackBar(
           content: Text('タスクを削除しました'),
@@ -375,7 +358,7 @@ class ToDo extends ToDoListItem {
   void toggle() => isDone = !isDone;
 }
 
-class SectionTitle extends ToDoListItem {
+class SectionHeader extends ToDoListItem {
   String title;
-  SectionTitle({@required this.title});
+  SectionHeader({@required this.title});
 }
