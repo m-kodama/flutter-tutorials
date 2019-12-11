@@ -96,7 +96,6 @@ class _ToDoScreenState extends State<ToDoScreen> {
               return _buildAnimatedListItem(todo, animation);
             }
             if (todo is SectionTitle) {
-              // チェック済0件　かつ　未チェック0件
               List<Widget> ret = [];
               if (uncheckedToDoList.isEmpty) ret.add(_buildEmptySheet());
               if (checkedToDoList.isNotEmpty)
@@ -109,8 +108,6 @@ class _ToDoScreenState extends State<ToDoScreen> {
         floatingActionButton: AddTodoButton(
           onFormSubmit: _createToDo,
         ),
-        // FABをcenterにおきたい時はこれ
-        // floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
     );
   }
