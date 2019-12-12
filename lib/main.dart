@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(App());
+void main() => runApp(const App());
 
 class App extends StatelessWidget {
+  const App({Key key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     debugPaintSizeEnabled = false;
     return MaterialApp(
-      title: 'ToDo List',
-      theme: ThemeData.dark(),
-      home: ToDoScreen(),
-    );
+        title: 'ToDo List',
+        theme: ThemeData.dark(),
+        home: ChangeNotifierProvider(
+          builder: (context) => _ToDo(),
+          child: const _ToDoListPage(),
+        ));
+  }
+}
+
+class _ToDoListPage extends StatelessWidget {
+  const _ToDoListPage({Key: key}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return Container();
   }
 }
 
@@ -248,7 +260,7 @@ class _AddTodoButtonState extends State<AddTodoButton> {
       return;
     }
     widget.onFormSubmit(inputTodoTextController.text);
-    // テキス���フィールドをクリアする
+    // テキス���フィ���ルドをクリアする
     inputTodoTextController.clear();
     // ボトムシートを閉じる
     Navigator.pop(context);
