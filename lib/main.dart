@@ -6,6 +6,7 @@ void main() => runApp(const App());
 
 class App extends StatelessWidget {
   const App({Key key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     debugPaintSizeEnabled = false;
@@ -20,78 +21,7 @@ class App extends StatelessWidget {
 }
 
 class _ToDoListPage extends StatelessWidget {
-  const _ToDoListPage({Key: key}) : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    return Container();
-  }
-}
-
-class ToDoScreen extends StatefulWidget {
-  @override
-  _ToDoScreenState createState() => _ToDoScreenState();
-}
-
-class _ToDoScreenState extends State<ToDoScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
-  List<ToDo> _todoList = [];
-  bool _isHideCheckedTodoList = false;
-
-  List<ToDo> get checkedToDoList =>
-      _todoList.where((todo) => todo.isDone).toList();
-  List<ToDo> get uncheckedToDoList =>
-      _todoList.where((todo) => !todo.isDone).toList();
-
-  List<ToDoListItem> get todoList => []
-    ..addAll(uncheckedToDoList)
-    ..add(SectionHeader(title: '完了済み'))
-    ..addAll(checkedToDoList);
-
-  AnimatedListState get _animatedList => _listKey.currentState;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  void _handleListItemTap(ToDo todo) async {
-    print('onTap');
-    setState(() async {
-      // アニメーションのduration
-      var deleteDuration = Duration(milliseconds: 275);
-      var insertDuration = Duration(milliseconds: 225);
-      var delay = Duration(milliseconds: 200);
-
-      // リストから削除
-      var animetedIndex = todoList.indexOf(todo);
-      _todoList.remove(todo);
-      _animatedList.removeItem(
-        animetedIndex,
-        (context, animation) => _buildAnimatedListItem(todo, animation),
-        duration: deleteDuration,
-      );
-      // 削除のアニメーションが終わるまで待つ
-      await new Future.delayed(delay);
-
-      // リストの先頭に追加
-      _todoList.insert(0, todo);
-      _animatedList.insertItem(
-        todo.isDone ? 0 : uncheckedToDoList.length,
-        duration: insertDuration,
-      );
-
-      // チェック状態を変更
-      todo.toggle();
-    });
-  }
-
-  void _createToDo(String todoText) {
-    // TODO: アニメーションインサート処理を関数化する
-    var todo = ToDo(text: todoText);
-    _todoList.insert(0, todo);
-    _animatedList.insertItem(0);
-  }
+  const _ToDoListPage({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -223,6 +153,73 @@ class _ToDoScreenState extends State<ToDoScreen> {
   }
 }
 
+class _ToDo extends ValueNotifier<List<ToDo>> {
+  _ToDo() : super([]);
+
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+
+  // TODO: 別のproviderに移す
+  bool _isHideCheckedTodoList = false;
+
+  List<ToDo> get _checkedToDoList =>
+      value.where((todo) => todo.isDone).toList();
+  List<ToDo> get _uncheckedToDoList =>
+      value.where((todo) => !todo.isDone).toList();
+
+  List<ToDoListItem> get todoList => []
+    ..addAll(_uncheckedToDoList)
+    ..add(SectionHeader(title: '完了済み'))
+    ..addAll(_checkedToDoList);
+
+  AnimatedListState get _animatedList => _listKey.currentState;
+
+  void add() {}
+
+  void remove() {}
+
+  void toggle(
+      {ToDo todo,
+      Widget Function(ToDo todo, Animation animation)
+          buildAnimatedListItem}) async {
+    // アニメーションのduration
+    var deleteDuration = Duration(milliseconds: 275);
+    var insertDuration = Duration(milliseconds: 225);
+    var delay = Duration(milliseconds: 200);
+
+    // リストから削除
+    var animetedIndex = todoList.indexOf(todo);
+    value.remove(todo);
+    _animatedList.removeItem(
+      animetedIndex,
+      (context, animation) => buildAnimatedListItem(todo, animation),
+      duration: deleteDuration,
+    );
+    // 削除のアニメーションが終わるまで待つ
+    await new Future.delayed(delay);
+
+    // リストの先頭に追加
+    value.insert(0, todo);
+    _animatedList.insertItem(
+      todo.isDone ? 0 : _uncheckedToDoList.length,
+      duration: insertDuration,
+    );
+
+    // チェック状態を変更
+    todo.toggle();
+  }
+}
+
+class _ToDoScreenState extends State<ToDoScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
+  void _createToDo(String todoText) {
+    // TODO: アニメーションインサート処理を関数化する
+    var todo = ToDo(text: todoText);
+    _todoList.insert(0, todo);
+    _animatedList.insertItem(0);
+  }
+}
+
 class ToDoListItemView extends StatelessWidget {
   final ToDo todo;
   final void Function(ToDo todo) onPressed;
@@ -262,7 +259,7 @@ class _AddTodoButtonState extends State<AddTodoButton> {
     widget.onFormSubmit(inputTodoTextController.text);
     // テキス���フィ���ルドをクリアする
     inputTodoTextController.clear();
-    // ボトムシートを閉じる
+    // ボ���������ム����ートを閉じる
     Navigator.pop(context);
   }
 
@@ -375,3 +372,5 @@ class SectionHeader extends ToDoListItem {
   String title;
   SectionHeader({@required this.title});
 }
+
+class EmptySheet extends ToDoListItem {}
