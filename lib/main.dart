@@ -11,12 +11,20 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     debugPaintSizeEnabled = false;
     return MaterialApp(
-        title: 'ToDo List',
-        theme: ThemeData.dark(),
-        home: ChangeNotifierProvider(
-          builder: (context) => _ToDoList(),
-          child: const _ToDoListPage(),
-        ));
+      title: 'ToDo List',
+      theme: ThemeData.dark(),
+      home: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (context) => _ToDoList(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => _HideCheckedTodoList(),
+          ),
+        ],
+        child: const _ToDoListPage(),
+      ),
+    );
   }
 }
 
@@ -25,39 +33,44 @@ class _ToDoListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final todolistProvider = Provider.of<_ToDoList>(context);
     return SafeArea(
       child: Scaffold(
-        key: _scaffoldKey,
+        key: todolistProvider.scaffoldKey,
         appBar: AppBar(
           title: Text('GoriDev'),
         ),
         body: AnimatedList(
-          key: _listKey,
-          initialItemCount: todoList.length,
+          key: todolistProvider.listKey,
+          initialItemCount: todolistProvider.todoList.length,
           itemBuilder: (context, index, animation) {
-            ToDoListItem todo = todoList[index];
+            ToDoListItem todo = todolistProvider.todoList[index];
             if (todo is ToDo) {
-              if (todo.isDone && _isHideCheckedTodoList) return null;
-              return _buildAnimatedListItem(todo, animation);
+              if (todo.isDone &&
+                  Provider.of<_HideCheckedTodoList>(context).value) return null;
+              return _AnimatedListItem(todo: todo, animation: animation);
             }
-            if (todo is SectionHeader) {
-              List<Widget> ret = [];
-              if (uncheckedToDoList.isEmpty) ret.add(_buildEmptySheet());
-              if (checkedToDoList.isNotEmpty)
-                ret.add(_buildCheckedSectionHeader());
-              return Column(children: ret);
-            }
+            if (todo is SectionHeader) return const _SectionHeader();
+            if (todo is EmptySheet) return const _EmptySheet();
             return null;
           },
         ),
         floatingActionButton: AddTodoButton(
-          onFormSubmit: _createToDo,
+          onFormSubmit: todolistProvider.add,
         ),
       ),
     );
   }
+}
 
-  Widget _buildAnimatedListItem(ToDo todo, Animation animation) {
+class _AnimatedListItem extends StatelessWidget {
+  final ToDo todo;
+  final Animation animation;
+  const _AnimatedListItem({Key key, this.todo, this.animation})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return Dismissible(
       background: Container(
         color: Colors.red,
@@ -68,35 +81,26 @@ class _ToDoListPage extends StatelessWidget {
       key: Key(todo.hashCode.toString()),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
-        void Function() onPressed;
-        setState(() {
-          // TODO: デリート処理を共通化する
-          // TODO: snackbar処理を共通化する
-          // リストから削除
-          var animatedIndex = todoList.indexOf(todo);
-          var removedIndex = _todoList.indexOf(todo);
-          _todoList.removeAt(removedIndex);
-          _animatedList.removeItem(
-            animatedIndex,
-            (context, animation) => _buildAnimatedListItem(todo, animation),
-            // durationを0にしないとdismissibleの削除アニメーションと重複してエラーが出るっぽい
-            duration: Duration(milliseconds: 0),
-          );
+        Provider.of<_ToDoList>(context).remove(
+          todo: todo,
+          duration: Duration(milliseconds: 0),
+          buildAnimatedListItem: (todo, animation) => _AnimatedListItem(
+            todo: todo,
+            animation: animation,
+          ),
+        );
 
-          onPressed = () {
-            // TODO: インサート処理を共通化する
-            _todoList.insert(removedIndex, todo);
-            _animatedList.insertItem(animatedIndex);
-          };
-        });
         final snackBar = SnackBar(
           content: Text('タスクを削除しました'),
           action: SnackBarAction(
             label: '元に戻す',
-            onPressed: onPressed,
+            onPressed: Provider.of<_ToDoList>(context).undoRemove,
           ),
         );
-        _scaffoldKey.currentState.showSnackBar(snackBar);
+        Provider.of<_ToDoList>(context)
+            .scaffoldKey
+            .currentState
+            .showSnackBar(snackBar);
       },
       child: ScaleTransition(
         scale: animation.drive(
@@ -104,32 +108,62 @@ class _ToDoListPage extends StatelessWidget {
             curve: const Interval(0, 1, curve: Curves.fastOutSlowIn),
           ),
         ),
-        child: ToDoListItemView(
+        child: _ToDoListItemView(
           todo: todo,
-          onPressed: _handleListItemTap,
         ),
       ),
     );
   }
+}
 
-  Widget _buildCheckedSectionHeader() {
+class _ToDoListItemView extends StatelessWidget {
+  final ToDo todo;
+  const _ToDoListItemView({Key key, @required this.todo}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: IconButton(
+        icon: Icon(todo.isDone ? Icons.check : Icons.radio_button_unchecked),
+        onPressed: () {
+          Provider.of<_ToDoList>(context).toggle(
+            todo: todo,
+            buildAnimatedListItem: (todo, animation) => _AnimatedListItem(
+              todo: todo,
+              animation: animation,
+            ),
+          );
+        },
+      ),
+      title: Text(todo.text),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return ListTile(
       title: Text('完了済み', style: TextStyle(fontSize: 12.0)),
       trailing: IconButton(
         icon: Icon(
-          _isHideCheckedTodoList ? Icons.expand_more : Icons.expand_less,
+          Provider.of<_HideCheckedTodoList>(context).value
+              ? Icons.expand_more
+              : Icons.expand_less,
           size: 20.0,
         ),
-        onPressed: () {
-          setState(() {
-            _isHideCheckedTodoList = !_isHideCheckedTodoList;
-          });
-        },
+        onPressed: Provider.of<_HideCheckedTodoList>(context).toggle,
       ),
     );
   }
+}
 
-  Widget _buildEmptySheet() {
+class _EmptySheet extends StatelessWidget {
+  const _EmptySheet({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -156,37 +190,48 @@ class _ToDoListPage extends StatelessWidget {
 class _ToDoList extends ValueNotifier<List<ToDo>> {
   _ToDoList() : super([]);
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
-
-  // TODO: 別のproviderに移す
-  bool _isHideCheckedTodoList = false;
+  final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
+  final GlobalKey<AnimatedListState> listKey = GlobalKey<AnimatedListState>();
 
   List<ToDo> get _checkedToDoList =>
       value.where((todo) => todo.isDone).toList();
   List<ToDo> get _uncheckedToDoList =>
       value.where((todo) => !todo.isDone).toList();
 
-  List<ToDoListItem> get todoList => []
-    ..addAll(_uncheckedToDoList)
-    ..add(SectionHeader(title: '完了済み'))
-    ..addAll(_checkedToDoList);
+  List<ToDoListItem> get todoList {
+    List<ToDoListItem> ret = [];
+    ret.addAll(_uncheckedToDoList);
+    if (_uncheckedToDoList.isEmpty) ret.add(EmptySheet());
+    if (_checkedToDoList.isNotEmpty) ret.add(SectionHeader());
+    ret.addAll(_checkedToDoList);
+    return ret;
+  }
 
-  AnimatedListState get _animatedList => _listKey.currentState;
+  AnimatedListState get _animatedList => listKey.currentState;
 
-  void add({String todoText}) {
+  ToDo _lastRemovedToDo;
+  int _lastRemovedToDoIndex;
+
+  void add(String todoText) {
     var todo = ToDo(text: todoText);
     _insertToDo(todo: todo, index: 0);
   }
 
-  void remove(
-      {ToDo todo,
-      Widget Function(ToDo todo, Animation animation) buildAnimatedListItem}) {
+  void remove({
+    ToDo todo,
+    Widget Function(ToDo todo, Animation animation) buildAnimatedListItem,
+    Duration duration,
+  }) {
     var animatedIndex = todoList.indexOf(todo);
     _removeToDo(
         todo: todo,
         animatedIndex: animatedIndex,
+        duration: duration,
         buildAnimatedListItem: buildAnimatedListItem);
+  }
+
+  void undoRemove() {
+    _insertToDo(todo: _lastRemovedToDo, index: _lastRemovedToDoIndex);
   }
 
   void toggle(
@@ -235,6 +280,8 @@ class _ToDoList extends ValueNotifier<List<ToDo>> {
       int animatedIndex,
       Duration duration = const Duration(milliseconds: 200),
       Widget Function(ToDo todo, Animation animation) buildAnimatedListItem}) {
+    _lastRemovedToDoIndex = value.indexOf(todo);
+    _lastRemovedToDo = todo;
     value.remove(todo);
     _animatedList.removeItem(
       animatedIndex,
@@ -244,23 +291,10 @@ class _ToDoList extends ValueNotifier<List<ToDo>> {
   }
 }
 
-class ToDoListItemView extends StatelessWidget {
-  final ToDo todo;
-  final void Function(ToDo todo) onPressed;
-  ToDoListItemView({Key key, @required this.todo, this.onPressed})
-      : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: IconButton(
-        icon: Icon(todo.isDone ? Icons.check : Icons.radio_button_unchecked),
-        onPressed: () {
-          this.onPressed(todo);
-        },
-      ),
-      title: Text(todo.text),
-    );
-  }
+class _HideCheckedTodoList extends ValueNotifier<bool> {
+  _HideCheckedTodoList() : super(false);
+
+  void toggle() => value = !value;
 }
 
 class AddTodoButton extends StatefulWidget {
@@ -392,9 +426,6 @@ class ToDo extends ToDoListItem {
   void toggle() => isDone = !isDone;
 }
 
-class SectionHeader extends ToDoListItem {
-  String title;
-  SectionHeader({@required this.title});
-}
+class SectionHeader extends ToDoListItem {}
 
 class EmptySheet extends ToDoListItem {}
