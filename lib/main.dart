@@ -14,7 +14,7 @@ class App extends StatelessWidget {
         title: 'ToDo List',
         theme: ThemeData.dark(),
         home: ChangeNotifierProvider(
-          builder: (context) => _ToDo(),
+          builder: (context) => _ToDoList(),
           child: const _ToDoListPage(),
         ));
   }
@@ -153,9 +153,10 @@ class _ToDoListPage extends StatelessWidget {
   }
 }
 
-class _ToDo extends ValueNotifier<List<ToDo>> {
-  _ToDo() : super([]);
+class _ToDoList extends ValueNotifier<List<ToDo>> {
+  _ToDoList() : super([]);
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
 
   // TODO: 別のproviderに移す
@@ -173,50 +174,73 @@ class _ToDo extends ValueNotifier<List<ToDo>> {
 
   AnimatedListState get _animatedList => _listKey.currentState;
 
-  void add() {}
+  void add({String todoText}) {
+    var todo = ToDo(text: todoText);
+    _insertToDo(todo: todo, index: 0);
+  }
 
-  void remove() {}
+  void remove(
+      {ToDo todo,
+      Widget Function(ToDo todo, Animation animation) buildAnimatedListItem}) {
+    var animatedIndex = todoList.indexOf(todo);
+    _removeToDo(
+        todo: todo,
+        animatedIndex: animatedIndex,
+        buildAnimatedListItem: buildAnimatedListItem);
+  }
 
   void toggle(
       {ToDo todo,
       Widget Function(ToDo todo, Animation animation)
           buildAnimatedListItem}) async {
     // アニメーションのduration
-    var deleteDuration = Duration(milliseconds: 275);
-    var insertDuration = Duration(milliseconds: 225);
-    var delay = Duration(milliseconds: 200);
+    const removeDuration = Duration(milliseconds: 275);
+    const insertDuration = Duration(milliseconds: 225);
+    const delay = Duration(milliseconds: 200);
 
     // リストから削除
-    var animetedIndex = todoList.indexOf(todo);
-    value.remove(todo);
-    _animatedList.removeItem(
-      animetedIndex,
-      (context, animation) => buildAnimatedListItem(todo, animation),
-      duration: deleteDuration,
-    );
+    var animatedIndex = todoList.indexOf(todo);
+    _removeToDo(
+        todo: todo,
+        animatedIndex: animatedIndex,
+        duration: removeDuration,
+        buildAnimatedListItem: buildAnimatedListItem);
+
     // 削除のアニメーションが終わるまで待つ
     await new Future.delayed(delay);
 
     // リストの先頭に追加
-    value.insert(0, todo);
-    _animatedList.insertItem(
-      todo.isDone ? 0 : _uncheckedToDoList.length,
-      duration: insertDuration,
-    );
+    _insertToDo(
+        todo: todo,
+        index: todo.isDone ? 0 : _uncheckedToDoList.length,
+        duration: insertDuration);
 
     // チェック状態を変更
     todo.toggle();
   }
-}
 
-class _ToDoScreenState extends State<ToDoScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  void _insertToDo(
+      {ToDo todo,
+      int index,
+      Duration duration = const Duration(milliseconds: 200)}) {
+    value.insert(index, todo);
+    _animatedList.insertItem(
+      index,
+      duration: duration,
+    );
+  }
 
-  void _createToDo(String todoText) {
-    // TODO: アニメーションインサート処理を関数化する
-    var todo = ToDo(text: todoText);
-    _todoList.insert(0, todo);
-    _animatedList.insertItem(0);
+  void _removeToDo(
+      {ToDo todo,
+      int animatedIndex,
+      Duration duration = const Duration(milliseconds: 200),
+      Widget Function(ToDo todo, Animation animation) buildAnimatedListItem}) {
+    value.remove(todo);
+    _animatedList.removeItem(
+      animatedIndex,
+      (context, animation) => buildAnimatedListItem(todo, animation),
+      duration: duration,
+    );
   }
 }
 
@@ -257,7 +281,7 @@ class _AddTodoButtonState extends State<AddTodoButton> {
       return;
     }
     widget.onFormSubmit(inputTodoTextController.text);
-    // テキス���フィ���ルドをクリアする
+    // テキス���フィ���ル���をクリアす���
     inputTodoTextController.clear();
     // ボ���������ム����ートを閉じる
     Navigator.pop(context);
