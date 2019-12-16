@@ -59,8 +59,14 @@ class _ToDoListPage extends StatelessWidget {
                   Provider.of<_HideCheckedTodoList>(context).value) return null;
               return _AnimatedListItem(todo: todo, animation: animation);
             }
-            if (todo is SectionHeader) return const _SectionHeader();
-            if (todo is EmptySheet) return const _EmptySheet();
+            if (todo is SectionHeader)
+              return todolistProvider.isSectionHeaderVisible
+                  ? _SectionHeader()
+                  : Column();
+            if (todo is EmptySheet)
+              return todolistProvider.isEmptySheetVisible
+                  ? _EmptySheet()
+                  : Column();
             return null;
           },
         ),
@@ -207,14 +213,14 @@ class _ToDoList extends ValueNotifier<List<ToDo>> {
   List<ToDo> get _uncheckedToDoList =>
       value.where((todo) => !todo.isDone).toList();
 
-  List<ToDoListItem> get todoList {
-    List<ToDoListItem> ret = [];
-    ret.addAll(_uncheckedToDoList);
-    if (_uncheckedToDoList.isEmpty) ret.add(EmptySheet());
-    if (_checkedToDoList.isNotEmpty) ret.add(SectionHeader());
-    ret.addAll(_checkedToDoList);
-    return ret;
-  }
+  List<ToDoListItem> get todoList => []
+    ..addAll(_uncheckedToDoList)
+    ..add(EmptySheet())
+    ..add(SectionHeader())
+    ..addAll(_checkedToDoList);
+
+  bool get isEmptySheetVisible => _uncheckedToDoList.isEmpty;
+  bool get isSectionHeaderVisible => _checkedToDoList.isNotEmpty;
 
   AnimatedListState get _animatedList => listKey.currentState;
 
